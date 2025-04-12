@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crackshash GPT</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ios-blue: #007AFF;
+            --ios-light-blue: #E5F1FF;
+            --ios-gray: #8E8E93;
+            --ios-light-gray: #F2F2F7;
+            --ios-green: #34C759;
+            --ios-red: #FF3B30;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #F2F2F7;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 80px;
+            scroll-behavior: smooth;
+        }
+        
+        .user-message {
+            background-color: var(--ios-blue);
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+            align-self: flex-end;
+            max-width: 80%;
+        }
+        
+        .bot-message {
+            background-color: #E5E5EA;
+            color: #000;
+            border-radius: 18px 18px 18px 4px;
+            align-self: flex-start;
+            max-width: 80%;
+        }
+        
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            background-color: #E5E5EA;
+            color: #000;
+            border-radius: 18px 18px 18px 4px;
+            align-self: flex-start;
+            margin-top: 8px;
+        }
+        
+        .loading-indicator span {
+            width: 8px;
+            height: 8px;
+            background-color: var(--ios-gray);
+            border-radius: 50%;
+            animation: pulse 1.4s infinite ease-in-out;
+        }
+        
+        .loading-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .loading-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(0.8);
+                opacity: 0.6;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+        
+        .header {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.85);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .input-box {
+            border-radius: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            background-color: white;
+        }
+        
+        .input-box:focus-within {
+            border-color: var(--ios-blue);
+            box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+        }
+        
+        .send-button {
+            background-color: var(--ios-blue);
+            color: white;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .send-button:disabled {
+            background-color: var(--ios-gray);
+            opacity: 0.5;
+        }
+        
+        .source-tag {
+            font-size: 10px;
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+        
+        .source-gemini {
+            background-color: #8AB4F8;
+            color: #202124;
+        }
+        
+        .source-chatgpt {
+            background-color: #10A37F;
+            color: white;
+        }
+        
+        .source-genspark {
+            background-color: #FF5733;
+            color: white;
+        }
+        
+        .source-web {
+            background-color: #34A853;
+            color: white;
+        }
+        
+        .code-block {
+            background-color: #2D2D2D;
+            color: #F8F8F2;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            position: relative;
+            font-size: 14px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        
+        .copy-button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 4px;
+            color: #F8F8F2;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .copy-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .footer {
+            background-color: rgba(255, 255, 255, 0.85);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--ios-gray);
+        }
+        
+        .status-indicator i {
+            font-size: 14px;
+        }
+        
+        .status-active {
+            color: var(--ios-green);
+        }
+        
+        .shake {
+            animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+            transform: translate3d(0, 0, 0);
+        }
+        
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        
+        .welcome-container {
+            max-width: 600px;
+            margin: 30px auto;
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        
+        .feature-card {
+            background-color: var(--ios-light-gray);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: left;
+        }
+        
+        .feature-card i {
+            color: var(--ios-blue);
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <header class="header sticky top-0 z-10 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center">
+            <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f916.svg" alt="Robot" class="w-8 h-8 mr-2">
+            <h1 class="text-xl font-semibold text-gray-800">Crackshash GPT</h1>
+        </div>
+        <div class="status-indicator">
+            <i class="fas fa-circle status-active"></i>
+            <span id="status-text">Ready</span>
+        </div>
+    </header>
+
+    <div id="chat-container" class="chat-container p-4 flex flex-col gap-4">
+        <div class="welcome-container">
+            <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f44b.svg" alt="Wave" class="w-12 h-12 mx-auto mb-4">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome to Crackshash GPT</h2>
+            <p class="text-gray-600 mb-4">Ask me anything and I'll provide helpful, accurate answers by collecting information from multiple sources.</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-brain"></i>
+                    <h3 class="font-semibold">Multiple AI Sources</h3>
+                    <p class="text-sm text-gray-600">Access knowledge from ChatGPT, Gemini, Genspark, and more</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-search"></i>
+                    <h3 class="font-semibold">Web Search</h3>
+                    <p class="text-sm text-gray-600">Find the latest information from across the internet</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-code"></i>
+                    <h3 class="font-semibold">Code Generation</h3>
+                    <p class="text-sm text-gray-600">Get working code examples in multiple languages</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-comment-alt"></i>
+                    <h3 class="font-semibold">Human-like Responses</h3>
+                    <p class="text-sm text-gray-600">Simple, easy-to-understand conversational style</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-indicator" class="loading-indicator mx-4 hidden">
+        <span></span>
+        <span></span>
+        <span></span>
+        <div class="ml-2">Collecting data...</div>
+    </div>
+
+    <footer class="footer sticky bottom-0 p-4">
+        <div class="flex items-end gap-2 relative">
+            <div class="input-box flex-1 flex items-center px-4 py-2">
+                <textarea id="user-input" rows="1" placeholder="Ask anything..." class="w-full focus:outline-none resize-none bg-transparent"></textarea>
+            </div>
+            <button id="send-button" class="send-button" disabled>
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+        <div class="text-center text-xs text-gray-500 mt-2">
+            Created by STARK | Follow on Instagram @Crackshash_mod
+        </div>
+    </footer>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const statusText = document.getElementById('status-text');
+        
+        // API configuration - replace with your actual API endpoint
+        const API_ENDPOINT = 'https://api.yourbackend.com/query';
+        const API_KEY = 'your-api-key-here'; // You'll need to implement secure API key handling
+        
+        // Auto-resize textarea
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight < 120) ? (this.scrollHeight) + 'px' : '120px';
+            
+            // Enable/disable send button based on input
+            sendButton.disabled = !this.value.trim();
+        });
+
+        // Send message on Enter (but allow Shift+Enter for new lines)
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!sendButton.disabled) {
+                    sendMessage();
+                }
+            }
+        });
+
+        sendButton.addEventListener('click', sendMessage);
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+            
+            // Add user message to chat
+            appendMessage(message, 'user');
+            
+            // Clear input
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            sendButton.disabled = true;
+            
+            // Show loading indicator
+            loadingIndicator.classList.remove('hidden');
+            updateStatus('Searching...', 'searching');
+            
+            // Process and respond
+            processRealMessage(message);
+        }
+
+        function appendMessage(content, type, source = null, isCode = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'user' ? 'user-message p-3 self-end' : 'bot-message p-3';
+            
+            if (isCode) {
+                const codeBlock = document.createElement('div');
+                codeBlock.className = 'code-block mt-2';
+                
+                const copyButton = document.createElement('button');
+                copyButton.className = 'copy-button';
+                copyButton.textContent = 'Copy';
+                copyButton.onclick = function() {
+                    navigator.clipboard.writeText(content).then(() => {
+                        copyButton.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyButton.textContent = 'Copy';
+                        }, 2000);
+                    });
+                };
+                
+                codeBlock.appendChild(copyButton);
+                
+                const codeContent = document.createElement('code');
+                codeContent.textContent = content;
+                codeBlock.appendChild(codeContent);
+                
+                messageDiv.innerHTML = 'Here\'s the code you requested:';
+                messageDiv.appendChild(codeBlock);
+            } else {
+                // Support for markdown-like links
+                const linkedContent = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="text-blue-600 underline">$1</a>');
+                messageDiv.innerHTML = linkedContent;
+            }
+            
+            if (source) {
+                const sourceTag = document.createElement('div');
+                sourceTag.className = `source-tag source-${source.toLowerCase()}`;
+                sourceTag.textContent = `Source: ${source}`;
+                messageDiv.appendChild(sourceTag);
+            }
+            
+            const messageContainer = document.createElement('div');
+            messageContainer.className = type === 'user' ? 'flex justify-end' : 'flex';
+            messageContainer.appendChild(messageDiv);
+            
+            chatContainer.appendChild(messageContainer);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function updateStatus(text, type = 'default') {
+            statusText.textContent = text;
+            
+            const statusIcon = document.querySelector('.status-indicator i');
+            statusIcon.classList.remove('status-active');
+            
+            if (type === 'searching') {
+                statusIcon.style.color = '#007AFF';
+            } else if (type === 'ready') {
+                statusIcon.style.color = '#34C759';
+                statusIcon.classList.add('status-active');
+            } else if (type === 'error') {
+                statusIcon.style.color = '#FF3B30';
+            }
+        }
+
+        // Real API processing - replace the simulated functions with this
+        async function processRealMessage(message) {
+            try {
+                updateStatus('Searching sources...', 'searching');
+                
+                // Check if it's a code request
+                if (message.toLowerCase().includes('code') || 
+                    message.toLowerCase().includes('script') || 
+                    message.toLowerCase().includes('program') ||
+                    message.toLowerCase().includes('function')) {
+                    await handleCodeRequest(message);
+                    return;
+                }
+                
+                // For real implementation, call your backend API
+                const response = await fetchFromBackend(message);
+                
+                // Hide loading indicator
+                loadingIndicator.classList.add('hidden');
+                updateStatus('Ready', 'ready');
+                
+                // Display the response from your backend
+                appendMessage(response.content, 'bot', response.source);
+                
+            } catch (error) {
+                console.error('Error processing message:', error);
+                loadingIndicator.classList.add('hidden');
+                updateStatus('Error', 'error');
+                appendMessage("I'm sorry, I encountered an error while processing your request. Please try again later.", 'bot');
+            }
+        }
+        
+        // Function to fetch data from your backend
+        async function fetchFromBackend(query) {
+            // This is where you would implement the actual API call to your backend
+            // For now, we'll simulate a response to avoid errors
+            
+            // Simulated backend call - replace this with actual API call
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    // Choose a source based on the query type
+                    let source;
+                    let content;
+                    
+                    if (query.includes('latest') || 
+                        query.includes('recent') || 
+                        query.includes('news') || 
+                        query.includes('current')) {
+                        source = 'Web';
+                        content = `After searching online sources, I found that ${generateResponseForMessage(query)} This information was collected from several reliable sources on the web, including recent publications and trusted websites.`;
+                    } else {
+                        // Randomly choose a source for other types of queries
+                        const sources = ['ChatGPT', 'Gemini', 'Genspark'];
+                        source = sources[Math.floor(Math.random() * sources.length)];
+                        
+                        if (source === 'ChatGPT') {
+                            content = "Based on my knowledge, " + generateResponseForMessage(query);
+                        } else if (source === 'Gemini') {
+                            content = "I understand your question about " + query.toLowerCase().split(' ').slice(0, 3).join(' ') + "... " + generateResponseForMessage(query);
+                        } else {
+                            content = "Here's what I know: " + generateResponseForMessage(query);
+                        }
+                    }
+                    
+                    resolve({ content, source });
+                }, 1500 + Math.random() * 1000);
+            });
+        }
+
+        // Handle code generation requests
+        async function handleCodeRequest(message) {
+            updateStatus('Generating code...', 'searching');
+            
+            // Determine the programming language from the message
+            let language = detectLanguage(message);
+            
+            try {
+                // In a real implementation, you would call your backend API for code generation
+                // For now, we'll use our helper functions
+                
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                let codeExample;
+                
+                // Generate appropriate code based on the detected language
+                switch (language) {
+                    case 'python':
+                        codeExample = generatePythonExample(message);
+                        break;
+                    case 'html':
+                        codeExample = generateHTMLExample(message);
+                        break;
+                    case 'java':
+                        codeExample = generateJavaExample(message);
+                        break;
+                    case 'c#':
+                        codeExample = generateCSharpExample(message);
+                        break;
+                    case 'php':
+                        codeExample = generatePHPExample(message);
+                        break;
+                    default:
+                        codeExample = generateJavaScriptExample(message);
+                }
+                
+                loadingIndicator.classList.add('hidden');
+                updateStatus('Ready', 'ready');
+                appendMessage(codeExample, 'bot', 'Genspark', true);
+                
+            } catch (error) {
+                console.error('Error generating code:', error);
+                loadingIndicator.classList.add('hidden');
+                updateStatus('Error', 'error');
+                appendMessage("I'm sorry, I encountered an error while generating code. Please try again.", 'bot');
+            }
+        }
+        
+        // Detect programming language from message
+        function detectLanguage(message) {
+            const lowerMessage = message.toLowerCase();
+            const languageKeywords = {
+                'python': ['python', 'py', 'django', 'flask', 'numpy', 'pandas'],
+                'javascript': ['javascript', 'js', 'node', 'react', 'vue', 'angular'],
+                'html': ['html', 'css', 'web page', 'website'],
+                'java': ['java', 'spring', 'android'],
+                'c#': ['c#', '.net', 'unity'],
+                'php': ['php', 'laravel', 'symfony']
+            };
+            
+            for (const [lang, keywords] of Object.entries(languageKeywords)) {
+                if (keywords.some(keyword => lowerMessage.includes(keyword))) {
+                    return lang;
+                }
+            }
+            
+            return 'javascript'; // Default language
+        }
+
+        // Helper functions to generate code examples
+        function generateJavaScriptExample(message) {
+            if (message.includes('chatbot')) {
+                return `// Simple JavaScript chatbot
+const responses = {
+  "hello": "Hi there! How can I help you?",
+  "how are you": "I'm just a bot, but I'm working fine!",
+  "bye": "Goodbye! Have a great day!"
+};
+
+function chatbot(input) {
+  input = input.toLowerCase();
+  
+  for (const key in responses) {
+    if (input.includes(key)) {
+      return responses[key];
+    }
+  }
+  
+  return "I'm not sure how to respond to that.";
+}
+
+// Example usage
+console.log(chatbot("hello there")); // "Hi there! How can I help you?"`;
+            } else if (message.includes('fetch') || message.includes('api')) {
+                return `// Fetch data from an API
+async function fetchData(url) {
+  try {
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(\`HTTP error! Status: \${response.status}\`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    return null;
+  }
+}
+
+// Example usage
+fetchData('https://api.example.com/data')
+  .then(data => {
+    console.log('Data received:', data);
+  });`;
+            } else {
+                return `// Basic JavaScript function
+function processData(input) {
+  // Input validation
+  if (!input || typeof input !== 'string') {
+    return 'Invalid input';
+  }
+  
+  // Process the data
+  const processed = input.trim().toUpperCase();
+  
+  // Return the result
+  return \`Processed: \${processed}\`;
+}
+
+// Example usage
+const result = processData('hello world');
+console.log(result); // "Processed: HELLO WORLD"`;
+            }
+        }
+
+        function generatePythonExample(message) {
+            if (message.includes('web') || message.includes('flask')) {
+                return `# Simple Flask web application
+from flask import Flask, render_template, request
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/process', methods=['POST'])
+def process():
+    user_input = request.form.get('user_input', '')
+    result = f"You entered: {user_input.upper()}"
+    return render_template('result.html', result=result)
+
+if __name__ == '__main__':
+    app.run(debug=True)`;
+            } else if (message.includes('data') || message.includes('pandas')) {
+                return `# Data analysis with pandas
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load data
+data = pd.read_csv('data.csv')
+
+# Display basic information
+print(data.info())
+print(data.describe())
+
+# Simple visualization
+data.plot(kind='bar', x='category', y='value')
+plt.title('Values by Category')
+plt.xlabel('Category')
+plt.ylabel('Value')
+plt.savefig('chart.png')
+plt.show()`;
+            } else {
+                return `# Python function example
+def analyze_text(text):
+    """
+    Analyze a text string and return statistics.
+    
+    Args:
+        text (str): The input text to analyze
+        
+    Returns:
+        dict: Statistics about the text
+    """
+    if not isinstance(text, str):
+        raise TypeError("Input must be a string")
+    
+    # Calculate statistics
+    char_count = len(text)
+    word_count = len(text.split())
+    line_count = len(text.splitlines())
+    
+    # Return as dictionary
+    return {
+        "characters": char_count,
+        "words": word_count,
+        "lines": line_count
+    }
+
+# Example usage
+sample_text = """Hello world!
+This is a sample text.
+It has multiple lines."""
+
+results = analyze_text(sample_text)
+print(results)`;
+            }
+        }
+
+        function generateHTMLExample(message) {
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Webpage</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+        }
+        
+        .content {
+            padding: 20px;
+            background: white;
+            border-radius: 4px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Welcome to My Website</h1>
+            <p>A simple HTML example</p>
+        </header>
+        
+        <div class="content">
+            <h2>About Me</h2>
+            <p>This is a paragraph about me. I am a web developer who loves creating responsive websites.</p>
+            
+            <h2>My Skills</h2>
+            <ul>
+                <li>HTML</li>
+                <li>CSS</li>
+                <li>JavaScript</li>
+                <li>Responsive Design</li>
+            </ul>
+        </div>
+        
+        <footer>
+            <p>&copy; 2025 My Website. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>`;
+        }
+
+        function generateJavaExample(message) {
+            return `public class DataProcessor {
+    /**
+     * Processes the given data string and returns the result.
+     * 
+     * @param data The input data to process
+     * @return The processed result
+     * @throws IllegalArgumentException if the input is invalid
+     */
+    public static String processData(String data) {
+        // Validate input
+        if (data == null || data.isEmpty()) {
+            throw new IllegalArgumentException("Data cannot be null or empty");
+        }
+        
+        // Process the data
+        StringBuilder result = new StringBuilder();
+        String[] words = data.split("\\s+");
+        
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                result.append(Character.toUpperCase(word.charAt(0)))
+                      .append(word.substring(1))
+                      .append(" ");
+            }
+        }
+        
+        return result.toString().trim();
+    }
+    
+    public static void main(String[] args) {
+        try {
+            String input = "hello world, this is a test";
+            String processed = processData(input);
+            System.out.println("Original: " + input);
+            System.out.println("Processed: " + processed);
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+}`;
+        }
+
+        function generateCSharpExample(message) {
+            return `using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace DataProcessor
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            try
+            {
+                Console.WriteLine("Enter some text to process:");
+                string input = Console.ReadLine();
+                
+                string result = ProcessData(input);
+                Console.WriteLine($"Processed result: {result}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Processes the input string data.
+        /// </summary>
+        /// <param name="data">The input data to process</param>
+        /// <returns>The processed string</returns>
+        /// <exception cref="ArgumentException">Thrown when input is invalid</exception>
+        public static string ProcessData(string data)
+        {
+            if (string.IsNullOrWhiteSpace(data))
+            {
+                throw new ArgumentException("Input data cannot be empty");
+            }
+            
+            // Convert to title case
+            var words = data.Split(' ')
+                .Where(w => !string.IsNullOrWhiteSpace(w))
+                .Select(w => char.ToUpper(w[0]) + w.Substring(1).ToLower());
+                
+            return string.Join(" ", words);
+        }
+    }
+}`;
+        }
+
+        function generatePHPExample(message) {
+    return `<?php
+/**
+ * Data Processing Class
+ * 
+ * A simple class to process and validate user data
+ */
+class DataProcessor {
+    private $data;
+    private $errors = [];
+    
+    /**
+     * Constructor
+     * 
+     * @param array $data The data to process
+     */
+    public function __construct($data = []) {
+        $this->data = $data;
+    }
+    
+    /**
+     * Validate the data
+     * 
+     * @return bool True if valid, false otherwise
+     */
+    public function validate() {
+        // Reset errors
+        $this->errors = [];
+        
+        // Check if name exists and is valid
+        if (empty($this->data['name'])) {
+            $this->errors['name'] = 'Name is required';
+        } elseif (strlen($this->data['name']) < 2) {
+            $this->errors['name'] = 'Name must be at least 2 characters';
+        }
+        
+        // Check if email exists and is valid
+        if (empty($this->data['email'])) {
+            $this->errors['email'] = 'Email is required';
+        } elseif (!filter_var($this->data['email'], FILTER_VALIDATE_EMAIL)) {
+            $this->errors['email'] = 'Email is invalid';
+        }
+        
+        return empty($this->errors);
+    }
+    
+    /**
+     * Process the data if valid
+     * 
+     * @return array|bool Processed data or false if invalid
+     */
+    public function process() {
+        if (!$this->validate()) {
+            return false;
+        }
+        
+        // Process data
+        $processed = [
+            'name' => ucwords(strtolower(trim($this->data['name']))),
+            'email' => strtolower(trim($this->data['email'])),
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+        
+        return $processed;
+    }
+    
+    /**
+     * Get validation errors
+     * 
+     * @return array Array of errors
+     */
+    public function getErrors() {
+        return $this->errors;
+    }
+}
+
+// Example usage
+$userData = [
+    'name' => 'John Doe',
+    'email' => 'john.doe@example.com'
+];
+
+$processor = new DataProcessor($userData);
+$result = $processor->process();
+
+if ($result) {
+    echo "Data processed successfully:\\n";
+    print_r($result);
+} else {
+    echo "Validation errors:\\n";
+    print_r($processor->getErrors());
+}`;
+}
